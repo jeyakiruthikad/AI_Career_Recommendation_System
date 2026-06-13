@@ -129,7 +129,7 @@ FILES = {
     "tech":    "Tech_Data_Cleaned.csv",
     "job":     "all_job_post.csv",
     "success": "education_career_success.csv",
-    "ai":      "AI-based_Career_Recommendation_System.csv",
+    "ai":      "AI-based Career Recommendation System.csv",
 }
 
 @st.cache_data
