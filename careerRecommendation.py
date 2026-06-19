@@ -405,17 +405,6 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# Dataset badges
-st.markdown(f"""
-<div style="margin-bottom:1.5rem">
-  <span style="font-size:0.78rem;color:#718096;font-weight:600;text-transform:uppercase;letter-spacing:0.06em">Datasets loaded: </span>
-  <span class="data-badge">Tech Profiles · {len(tech_df):,} rows</span>
-  <span class="data-badge">Job Posts · {len(job_df):,} rows</span>
-  <span class="data-badge">Career Success · {len(success_df):,} rows</span>
-  <span class="data-badge">AI Recommendations · {len(ai_df):,} rows</span>
-</div>
-""", unsafe_allow_html=True)
-
 st.markdown("""
 <div class="step-row">
   <div class="step"><div class="step-num">01</div><div class="step-label">Enter your profile</div></div>
