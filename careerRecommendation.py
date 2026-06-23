@@ -202,6 +202,24 @@ def build_tfidf(_tech_hash):
     vecs  = tfidf.fit_transform(tech["career_profile"])
     return tfidf, vecs
 
+#────Salary──────────────────────────────────────────────────────────────
+
+salary_ranges = {
+    "Data Scientist": (6, 15),
+    "Machine Learning Engineer": (7, 16),
+    "AI Engineer": (8, 18),
+    "Data Analyst": (4, 10),
+    "Business Analyst": (4, 9),
+    "Software Engineer": (5, 12),
+    "Backend Developer": (5, 12),
+    "Frontend Developer": (4, 10),
+    "Full Stack Developer": (6, 14),
+    "Cloud Engineer": (6, 15),
+    "DevOps Engineer": (6, 14),
+    "Cybersecurity Analyst": (5, 12),
+    "AI/ML Solutions Architect": (12, 25)
+}
+
 # ── Skill & Course Logic ──────────────────────────────────────────────────────
 priority_skills = [
     "Python","Statistics","Machine Learning","Deep Learning",
@@ -330,6 +348,13 @@ def readiness_tips(gpa, intern, proj, cert, soft, net):
     if net    < 70:tips.append("Attend hackathons, workshops, and grow your LinkedIn network")
     return tips
 
+def estimate_salary_lpa(career, readiness_score):
+    low, high = salary_ranges.get(career, (4, 10))
+
+    salary = low + (high - low) * (readiness_score / 100)
+
+    return round(salary, 1), low, high
+
 def run_analysis(skills, interests, education, field_of_study,
                  gpa, intern, proj, cert, soft, net,
                  tech, tfidf, vecs, salary_by_field, gpa_mult, ai_df):
@@ -358,18 +383,28 @@ def run_analysis(skills, interests, education, field_of_study,
 
     # ── Salary (from real education data) ──
     salary_usd = estimate_salary(field_of_study, gpa, intern, salary_by_field, gpa_mult)
-    salary_inr = round(salary_usd * 83.5, -3)   # approx USD→INR
+    salary_inr = round((salary_usd * 83.5) / 2.5, -3)  
+    salary_lpa = round(salary_inr / 100000, 1)
+    salary_low  = round(salary_lpa * 0.9, 1)
+    salary_high = round(salary_lpa * 1.1, 1)
+
+    
 
     # ── Readiness ──
     score = calc_readiness(gpa, intern, proj, cert, soft, net)
+
+    # ── Salary ──
+    salary_lpa,salary_low,salary_high = estimate_salary_lpa(best, score)
 
     return {
         "careers":       careers,
         "fields":        fields,
         "best":          best,
         "ai_match":      ai_match,
-        "salary_usd":    salary_usd,
         "salary_inr":    salary_inr,
+        "salary_lpa":   salary_lpa,
+        "salary_low":   salary_low,
+        "salary_high":   salary_high,
         "missing":       missing,
         "skill_courses": recommend_courses(missing),
         "career_path":   career_learning_path(best, tech),
@@ -388,12 +423,11 @@ with st.spinner("Loading datasets…"):
 st.markdown(f"""
 <div class="landing">
   <div class="landing-tag">📊 AI-Powered · Career Intelligence</div>
-  <div class="landing-title">AI Career Recommendation System</div>
+  <div class="landing-title">CareerVision - AI Career Recommendation System</div>
   <div class="landing-desc">
     Enter your academic background, technical skills, and experience profile to receive
     personalised career recommendations, a targeted skill gap analysis, and a curated
     course roadmap<strong style="color:#fff">
-    {len(tech_df):,} real job profiles</strong>.
   </div>
   <div class="landing-pills">
     <span class="landing-pill">🎯 Career Matching</span>
@@ -404,6 +438,8 @@ st.markdown(f"""
   </div>
 </div>
 """, unsafe_allow_html=True)
+
+
 
 st.markdown("""
 <div class="step-row">
@@ -452,7 +488,7 @@ if go:
     lvl, lvl_color, lvl_bg = r["readiness"]
 
     # ── Metric Row ──
-    ai_note = f'<div class="metric-sub" style="color:#276749">AI dataset also suggests: {r["ai_match"]}</div>' if r["ai_match"] else '<div class="metric-sub">Based on 1,161 tech profiles</div>'
+    ai_note = f'<div class="metric-sub" style="color:#276749">Additional Recommendation: {r["ai_match"]}</div>' if r["ai_match"] else '<div class="metric-sub">Personalized recommendation</div>'
     st.markdown(f"""
     <div class="metric-row">
       <div class="metric-card">
@@ -461,10 +497,12 @@ if go:
         {ai_note}
       </div>
       <div class="metric-card">
-        <div class="metric-label">Estimated Salary (USD)</div>
-        <div class="metric-value">${r['salary_usd']:,.0f}</div>
-        <div class="metric-sub">≈ ₹{r['salary_inr']:,.0f} / year · based on real data</div>
-      </div>
+        <div class="metric-label">Estimated Salary</div>
+        <div class="metric-value">{r['salary_lpa']} LPA</div>
+        <div class="metric-sub">
+            Expected Range: {r['salary_low']} - {r['salary_high']} LPA
+        </div>
+    </div>
       <div class="metric-card">
         <div class="metric-label">Career Readiness</div>
         <div class="metric-value">{r['score']}<span style="font-size:1rem">/100</span></div>
@@ -491,7 +529,7 @@ if go:
         <div class="section-header">
           <div class="section-icon">🎯</div>
           <div><div class="section-title">Career Recommendations</div>
-          <div class="section-sub">Matched from 1,161 real tech job profiles</div></div>
+          <div class="section-sub">Top career matches based on your profile</div></div>
         </div>""", unsafe_allow_html=True)
 
         rows = ""
